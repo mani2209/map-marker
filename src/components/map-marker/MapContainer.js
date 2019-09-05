@@ -1,19 +1,17 @@
 import React, { Component } from 'react';
-import { Map, GoogleApiWrapper, Marker } from 'google-maps-react';
-
+import { Map, GoogleApiWrapper, Marker, InfoWindow } from 'google-maps-react';
+import Geosuggest from 'react-geosuggest';
+import Grid from '@material-ui/core/Grid';
 
 export class MapContainer extends Component {
     constructor(props) {
       super(props);
   
       this.state = {
-        stores: [{lat: 47.49855629475769, lng: -122.14184416996333},
-                {latitude: 47.359423, longitude: -122.021071},
-                {latitude: 47.2052192687988, longitude: -121.988426208496},
-                {latitude: 47.6307081, longitude: -122.1434325},
-                {latitude: 47.3084488, longitude: -122.2140121},
-                {latitude: 47.5524695, longitude: -122.0425407}]
+        stores: [{placeId: 'ChIJOyH6ZBmEsUcRD',label: 'Old Elbe Tunnel, Hamburg', latitude: 53.5495629, longitude: 9.9625838}]
       }
+
+      this.onSuggestSelect = this.onSuggestSelect.bind(this)
     }
   
     displayMarkers = () => {
@@ -22,34 +20,83 @@ export class MapContainer extends Component {
          lat: store.latitude,
          lng: store.longitude
        }}
-       
-       onClick={() => console.log("You clicked me!")} />
+       onClick={() => console.log("You clicked me!")} >
+         <InfoWindow>Info</InfoWindow>
+       </Marker>
       })
+    }
+
+    onSuggestSelect(suggest) {
+      console.log(suggest)
+      if(suggest === undefined) return
+      let stores = this.state.stores
+
+      stores.push({
+        placeId: suggest.placeId,
+        label: suggest.label,
+        latitude: suggest.location.lat,
+        longitude: suggest.location.lng
+      })
+
+      this.setState({
+        stores: stores
+      })
+      console.log(stores)
     }
   
     render() {
       const mapStyles = {
-        width: '100%',
-        height: '100%',
+        width: '50%',
+        height: '80%',
+        position: 'inherit',
       };
+      var fixtures = [
+        {label: 'Old Elbe Tunnel, Hamburg', location: {lat: 53.5459, lng: 9.966576}}
+      ];
+      const google = window.google;
       return (
         <div>
-          <input type='text'/>
-          <Map
-            google={this.props.google}
-            zoom={8}
-            style={mapStyles}
-            initialCenter={{ lat: 47.444, lng: -122.176}}
-          >
-            {this.displayMarkers()}
-          </Map>
+           <Grid container spacing={3}>
+            
+            <Grid item xs={6} sm={6} container>
+            <Map
+            
+              google={this.props.google}
+              zoom={8}
+              style={mapStyles}
+              initialCenter={{ lat: 53.558572, lng: 9.9278215}}
+            >
+              {this.displayMarkers()}
+            </Map>
+            </Grid>
+            <Grid item xs={6} sm={6} style={{ zIndex: '9' }}>
+            <Geosuggest
+              ref={el=>this._geoSuggest=el}
+              placeholder="Start typing!"
+              initialValue=""
+              fixtures={fixtures}
+              onSuggestSelect={this.onSuggestSelect}
+              location={new google.maps.LatLng(53.558572, 9.9278215)}
+              radius="20" />
+              <button onClick={()=>this._geoSuggest.clear()}>Clear</button>
+              <h3>Added locations: </h3>
+              <ul>
+                {this.state.stores  ? this.state.stores.map((item, index) => {
+                  return <li key={index}>{item.label}</li>
+                }) : ''} 
+              </ul>
+            </Grid>
+            
+          </Grid>
+          
+          
           </div>
       );
     }
   }
 
-//export default MapContainer
-
 export default GoogleApiWrapper({
-  apiKey: 'AIzaSyBU7iyAO8xA8FsLlm0qSLNAbUm7ViVzC4Q'
+  apiKey: 'AIzaSyAUkuaISCnVug4T0HDIDskTtpChzoOPw-Y',
+  region: 'GE',
+  language: 'de'
 })(MapContainer);
