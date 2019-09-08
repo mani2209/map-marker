@@ -11,6 +11,7 @@ import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 
 const API = 'http://localhost:8081/'
+const With_API = true
 
 export class MapContainer extends Component {
     constructor(props) {
@@ -26,13 +27,15 @@ export class MapContainer extends Component {
     }
 
     componentDidMount(){
-      fetch(`${API}getlocations`)
+      if(With_API){
+        fetch(`${API}getlocations`)
         .then(res => {
           return res.json()
         })
         .then(places => { 
          this.setState({ stores: places })
         });
+      }
     }
 
     remove(placeId){
@@ -43,18 +46,19 @@ export class MapContainer extends Component {
       let deleteBody = {
         "placeid": placeId,
       }
+
+      if(With_API){
+        fetch(`${API}deletelocation`, {
+          method: 'delete',
+          headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(deleteBody)
+        }).then(res=>res.json())
+          .then(res => console.log(res));
+      }
       
-      fetch(`${API}deletelocation`, {
-        method: 'delete',
-        headers: {
-          'Accept': 'application/json, text/plain, */*',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(deleteBody)
-      }).then(res=>res.json())
-        .then(res => console.log(res));
-
-
       console.log(filterLocation)
       this.setState({
         stores: filterLocation
@@ -109,16 +113,19 @@ export class MapContainer extends Component {
         "longitude": `${suggest.location.lng}`
       }
       
-      fetch(`${API}addlocation`, {
-        method: 'post',
-        headers: {
-          'Accept': 'application/json, text/plain, */*',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(postBody)
-      }).then(res=>res.json())
-        .then(res => console.log(res));
-
+      if(With_API){
+        fetch(`${API}addlocation`, {
+          method: 'post',
+          headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(postBody)
+        }).then(res=>res.json())
+          .then(res => console.log(res));
+  
+      }
+      
       stores.push({
         placeId: suggest.placeId,
         label: suggest.label,
