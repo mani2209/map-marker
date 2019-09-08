@@ -10,23 +10,14 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 
-const useStyles = makeStyles(theme => ({
-  root: {
-    width: '100%',
-    marginTop: theme.spacing(3),
-    overflowX: 'auto',
-  },
-  table: {
-    minWidth: 650,
-  },
-}));
+const API = 'http://localhost:8081/'
 
 export class MapContainer extends Component {
     constructor(props) {
       super(props);
   
       this.state = {
-        stores: [{placeId: 'ChIJOyH6ZBmEsUcRD',label: 'Old Elbe Tunnel, Hamburg', latitude: 53.5495629, longitude: 9.9625838}],
+        stores: [],
         checkCountry: true,
       }
 
@@ -34,10 +25,35 @@ export class MapContainer extends Component {
       this.remove = this.remove.bind(this)
     }
 
+    componentDidMount(){
+      fetch(`${API}getlocations`)
+        .then(res => {
+          return res.json()
+        })
+        .then(places => { 
+         this.setState({ stores: places })
+        });
+    }
+
     remove(placeId){
       console.log('remove', placeId)
       const idToRemove = placeId
       const filterLocation = this.state.stores.filter((item) => item.placeId !== idToRemove)
+
+      let deleteBody = {
+        "placeid": placeId,
+      }
+      
+      fetch(`${API}deletelocation`, {
+        method: 'delete',
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(deleteBody)
+      }).then(res=>res.json())
+        .then(res => console.log(res));
+
 
       console.log(filterLocation)
       this.setState({
@@ -46,6 +62,7 @@ export class MapContainer extends Component {
     }
   
     displayMarkers = () => {
+      if(Object.keys(this.state.stores).length <= 0) return
       return this.state.stores.map((store, index) => {
         return <Marker key={index} id={index} position={{
          lat: store.latitude,
@@ -84,6 +101,23 @@ export class MapContainer extends Component {
       //       console.log(stores)
       //     }
       //   })
+
+      let postBody = {
+        "placeid": suggest.placeId,
+        "place": suggest.label,
+        "lattitude": `${suggest.location.lat}`,
+        "longitude": `${suggest.location.lng}`
+      }
+      
+      fetch(`${API}addlocation`, {
+        method: 'post',
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(postBody)
+      }).then(res=>res.json())
+        .then(res => console.log(res));
 
       stores.push({
         placeId: suggest.placeId,
@@ -149,7 +183,7 @@ export class MapContainer extends Component {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {this.state.stores.map((item, index) => (
+                    {Object.keys(this.state.stores).length > 0 ? this.state.stores.map((item, index) => (
                       <TableRow key={index}>
                         <TableCell component="th" scope="row">
                           {item.label}
@@ -158,7 +192,7 @@ export class MapContainer extends Component {
                         <TableCell align="right">{item.longitude}</TableCell>
                         <TableCell align="right"><button onClick={() => this.remove(item.placeId)}>Delete</button></TableCell>
                       </TableRow>
-                    ))}
+                    )) : ''}
                   </TableBody>
                 </Table>
               </Paper>
